@@ -45,8 +45,8 @@ opts() ->
      %% eunit_tests specific options.
      {tests, $t, "tests", string, "Comma separated list of test functions. Form: modname:funname | funname"},
      {default_module, $m, "default_module", string, "Default module."},
-     {function_suffix, undefined, "function_suffix", string, "Function suffix. Defalts to \"_test_\"."},
-     {module_suffix, undefined, "module_suffix", string, "Module suffix. Defalts to \"_tests\"."},
+     {function_suffix, undefined, "function_suffix", string, "Function suffix. Defaults to \"_test_\"."},
+     {module_suffix, undefined, "module_suffix", string, "Module suffix. Defaults to \"_tests\"."},
      %% passthrough to eunit provider.
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
      {cover_export_name, undefined, "cover_export_name", string, "Base name of the coverdata file to write."},

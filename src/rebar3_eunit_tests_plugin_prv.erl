@@ -2,8 +2,8 @@
 
 -export([init/1, do/1, format_error/1]).
 
--define(PROVIDER, rebar3_eunit_tests_plugin).
--define(DEPS, [app_discovery]).
+-define(PROVIDER, eunit_tests).
+-define(DEPS, [lock]).
 
 %% ===================================================================
 %% Public API

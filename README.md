@@ -6,7 +6,7 @@ Add the plugin to your rebar config:
 
 ```
 {plugins, [
-    {rebar3_eunit_tests_plugin, {git, "https://github.com/AoiMoe/rebar3_eunit_tests_plugin.git", {branch, "master"}}}
+    {rebar3_eunit_tests_plugin, {git, "https://github.com/AoiMoe/rebar3_eunit_tests_plugin.git", {tag, "v1.0.0"}}}
 ]}.
 ```
 

@@ -68,8 +68,20 @@ override_state(State0) ->
                 if DefModule =:= [] -> error("Tests is not specified.");
                    true -> ok
                 end,
+                %% rebar3 eunit_tests -m module
+                %%   -> [{module, module_tests}]
                 Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}];
            true ->
+                %% rebar3 eunit_tests -t mod1:fun1,mod2:fun2,...,modN:funN
+                %%   -> [{generator, mod1_tests, fun1_test_},
+                %%       {generator, mod2_tests, fun2_test_},
+                %%       ...
+                %%       {generator, modN_tests, funN_test_}]
+                %% rebar3 eunit_tests -m mod -t fun1,fun2,...,funN
+                %%   -> [{generator, mod_tests, fun1_test_},
+                %%       {generator, mod_tests, fun2_test_},
+                %%       ...
+                %%       {generator, mod_tests, funN_test_}]
                 Tests1 = re:split(Tests0, ",", [{return, list}]),
                 Tests =
                     lists:map(

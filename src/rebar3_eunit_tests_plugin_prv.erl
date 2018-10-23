@@ -17,8 +17,8 @@ init(State) ->
             {deps, ?DEPS},                % The list of dependencies
             {example, "rebar3 eunit_tests -t mod:fun,mod:fun"}, % How to use the plugin
             {opts, opts()},               % list of options understood by the plugin
-            {short_desc, "A rebar plugin"},
-            {desc, "A rebar plugin"},
+            {short_desc, "A rebar plugin \"eunit_tests\""},
+            {desc, "A rebar plugin to invoke eunit with overriding eunit_tests value by command line options."},
             {profiles, [test]}
     ]),
     {ok, rebar_state:add_provider(State, Provider)}.

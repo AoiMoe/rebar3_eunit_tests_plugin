@@ -1,6 +1,6 @@
 {application, rebar3_eunit_tests_plugin,
  [{description, "A rebar plugin"},
-  {vsn, "0.1.0"},
+  {vsn, "1.0.0"},
   {registered, []},
   {applications,
    [kernel,
@@ -10,6 +10,6 @@
   {modules, []},
 
   {maintainers, []},
-  {licenses, ["Apache 2.0"]},
+  {licenses, ["MIT"]},
   {links, []}
  ]}.

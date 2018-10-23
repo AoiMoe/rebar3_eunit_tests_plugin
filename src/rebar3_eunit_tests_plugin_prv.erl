@@ -63,17 +63,19 @@ override_state(State0) ->
     FunSuffix = proplists:get_value(function_suffix, RawOpts, "_test_"),
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
-        if Tests0 =:= [] -> error("Tests cannot be empty.");
+        if Tests0 =:= [] -> error("Tests is not specified.");
            true -> ok
         end,
         Tests1 = re:split(Tests0, ",", [{return, list}]),
         Gens =
             lists:map(
               fun([]) ->
-                      error("There is an empty component in tests.");
+                      error("Empty component in tests.");
                  (T) ->
                       {ModP, FunP} =
                           case re:split(T, ":", [{return, list}]) of
+                              [M, F] when M =:= []; F =:= [] ->
+                                  error(io_lib:format("Malformed component in tests: ~p", [T]));
                               [M, F] -> {M, F};
                               _ when Module0 =:= [] -> error("Module is not specified.");
                               [F] -> {Module0, F}
@@ -84,5 +86,5 @@ override_state(State0) ->
               end, Tests1),
         {ok, rebar_state:set(State0, eunit_tests, Gens)}
     catch
-        error:Reason -> {error, Reason}
+        error:Reason -> {error, lists:flatten(Reason)}
     end.

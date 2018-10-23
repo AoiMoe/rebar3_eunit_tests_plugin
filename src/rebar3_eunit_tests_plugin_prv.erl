@@ -60,32 +60,36 @@ opts() ->
 override_state(State0) ->
     {RawOpts, _} = rebar_state:command_parsed_args(State0),
     Tests0 = proplists:get_value(tests, RawOpts, []),
-    Module0 = proplists:get_value(default_module, RawOpts, []),
+    DefModule = proplists:get_value(default_module, RawOpts, []),
     FunSuffix = proplists:get_value(function_suffix, RawOpts, "_test_"),
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
-        if Tests0 =:= [] -> error("Tests is not specified.");
-           true -> ok
+        if Tests0 =:= [] ->
+                if DefModule =:= [] -> error("Tests is not specified.");
+                   true -> ok
+                end,
+                Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}];
+           true ->
+                Tests1 = re:split(Tests0, ",", [{return, list}]),
+                Tests =
+                    lists:map(
+                      fun([]) ->
+                              error("Empty component in tests.");
+                         (T) ->
+                              {ModP, FunP} =
+                                  case re:split(T, ":", [{return, list}]) of
+                                      [M, F] when M =:= []; F =:= [] ->
+                                          error(io_lib:format("Malformed component in tests: ~p", [T]));
+                                      [M, F] -> {M, F};
+                                      _ when DefModule =:= [] -> error("Module is not specified.");
+                                      [F] -> {DefModule, F}
+                                  end,
+                              Mod = list_to_atom(ModP ++ ModSuffix),
+                              Fun = list_to_atom(FunP ++ FunSuffix),
+                              {generator, Mod, Fun}
+                      end, Tests1)
         end,
-        Tests1 = re:split(Tests0, ",", [{return, list}]),
-        Gens =
-            lists:map(
-              fun([]) ->
-                      error("Empty component in tests.");
-                 (T) ->
-                      {ModP, FunP} =
-                          case re:split(T, ":", [{return, list}]) of
-                              [M, F] when M =:= []; F =:= [] ->
-                                  error(io_lib:format("Malformed component in tests: ~p", [T]));
-                              [M, F] -> {M, F};
-                              _ when Module0 =:= [] -> error("Module is not specified.");
-                              [F] -> {Module0, F}
-                          end,
-                      Mod = list_to_atom(ModP ++ ModSuffix),
-                      Fun = list_to_atom(FunP ++ FunSuffix),
-                      {generator, Mod, Fun}
-              end, Tests1),
-        {ok, rebar_state:set(State0, eunit_tests, Gens)}
+        {ok, rebar_state:set(State0, eunit_tests, Tests)}
     catch
         error:Reason -> {error, lists:flatten(Reason)}
     end.

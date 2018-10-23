@@ -47,7 +47,7 @@ opts() ->
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defalts to \"_test_\"."},
      {module_suffix, undefined, "module_suffix", string, "Module suffix. Defalts to \"_tests\"."},
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
-     {cover_export_name, undefined, "cover_export_name", "Base name of the coverdata file to write."},
+     {cover_export_name, undefined, "cover_export_name", string, "Base name of the coverdata file to write."},
      {verbose, $v, "verbose", boolean, "Verbose output. Defaults to false."},
      {name, undefined, "name", atom, "Gives a long name to the node."},
      {sname, undefined, "sname", atom, "Gives a short name to the node."},

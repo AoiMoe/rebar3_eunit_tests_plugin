@@ -28,8 +28,7 @@ init(State) ->
 do(State0) ->
     case override_state(State0) of
         {ok, State1} ->
-            State2 = rebar_prv_eunit:do(State1),
-            {ok, State2};
+            rebar_prv_eunit:do(State1);
         Err -> Err
     end.
 

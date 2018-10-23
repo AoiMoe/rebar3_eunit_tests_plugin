@@ -43,7 +43,7 @@ format_error(Reason) ->
 opts() ->
     [
      {tests, $t, "tests", string, "Comma separated list of test functions. Form: modname:funname | funname"},
-     {module, $m, "module", string, "Default module."},
+     {default_module, $m, "default_module", string, "Default module."},
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defalts to \"_test_\"."},
      {module_suffix, undefined, "module_suffix", string, "Module suffix. Defalts to \"_tests\"."},
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
@@ -58,7 +58,7 @@ opts() ->
 override_state(State0) ->
     {RawOpts, _} = rebar_state:command_parsed_args(State0),
     Tests0 = proplists:get_value(tests, RawOpts, []),
-    Module0 = proplists:get_value(module, RawOpts, []),
+    Module0 = proplists:get_value(default_module, RawOpts, []),
     FunSuffix = proplists:get_value(function_suffix, RawOpts, "_test_"),
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try

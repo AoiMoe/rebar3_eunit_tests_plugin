@@ -47,6 +47,12 @@ opts() ->
      {default_module, $m, "default_module", string, "Default module."},
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defaults to \"_test_\"."},
      {module_suffix, undefined, "module_suffix", string, "Module suffix. Defaults to \"_tests\"."},
+     %% eunit compatible options -- these are exclusive above.
+     {app, undefined, "app", string, "Comma separated list of application test suites to run."},
+     {application, undefined, "application", string, "Same as \"app\""},
+     {dir, $d, "dir", string, "Comma separated list of dirs to load tests from."},
+     {file, $f, "file", string, "Comma separated list of files to load tests from."},
+     {suite, $s, "suite", string, "Comma separated list of modules to load tests from."},
      %% passthrough to eunit provider.
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
      {cover_export_name, undefined, "cover_export_name", string, "Base name of the coverdata file to write."},
@@ -65,13 +71,26 @@ override_state(State0) ->
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
         if Tests0 =:= [] ->
-                if DefModule =:= [] -> error("Tests is not specified.");
-                   true -> ok
-                end,
-                %% rebar3 eunit_tests -m module
-                %%   -> [{module, module_tests}]
-                Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}];
+                if DefModule =:= [] ->
+                        %% rebar3 eunit_tests
+                        %%   -> []
+                        Tests = [];
+                   true ->
+                        %% rebar3 eunit_tests -m module
+                        %%   -> [{module, module_tests}]
+                        Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}]
+                end;
            true ->
+                _ = lists:foreach(fun(K) ->
+                                          case K of
+                                              app -> true;
+                                              application -> true;
+                                              dir -> true;
+                                              file -> true;
+                                              suite -> true;
+                                              _ -> false
+                                          end andalso error(io_lib:format("Exclusive --~p and -t", [K]))
+                                  end, proplists:get_keys(RawOpts)),
                 %% rebar3 eunit_tests -t mod1:fun1,mod2:fun2,...,modN:funN
                 %%   -> [{generator, mod1_tests, fun1_test_},
                 %%       {generator, mod2_tests, fun2_test_},

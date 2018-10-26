@@ -74,7 +74,7 @@ override_state(State0) ->
     try
         if Raw =/= [] ->
                 if Tests0 =/= [] -> error("Exclusive --raw and --tests"); true -> ok end,
-                check_exclusive_options(RawOpts),
+                check_exclusive_options(raw, RawOpts),
                 Tokens =
                     case erl_scan:string(Raw ++ ".") of
                         {ok, T, _} -> T;
@@ -93,7 +93,7 @@ override_state(State0) ->
                    true ->
                         %% rebar3 eunit_tests -m module
                         %%   -> [{module, module_tests}]
-                        check_exclusive_options(RawOpts),
+                        check_exclusive_options(default_module, RawOpts),
                         Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}]
                 end;
            true ->
@@ -107,7 +107,7 @@ override_state(State0) ->
                 %%       {generator, mod_tests, fun2_test_},
                 %%       ...
                 %%       {generator, mod_tests, funN_test_}]
-                check_exclusive_options(RawOpts),
+                check_exclusive_options(tests, RawOpts),
                 Tests1 = re:split(Tests0, ",", [{return, list}]),
                 Tests =
                     lists:map(
@@ -132,8 +132,8 @@ override_state(State0) ->
         error:Reason -> {error, lists:flatten(Reason)}
     end.
 
--spec check_exclusive_options([proplists:property()]) -> ok.
-check_exclusive_options(RawOpts) ->
+-spec check_exclusive_options(atom(), [proplists:property()]) -> ok.
+check_exclusive_options(Opt, RawOpts) ->
     lists:foreach(fun(K) ->
                           case K of
                               app -> true;
@@ -142,5 +142,5 @@ check_exclusive_options(RawOpts) ->
                               file -> true;
                               suite -> true;
                               _ -> false
-                          end andalso error(io_lib:format("Exclusive --~p and -t", [K]))
+                          end andalso error(io_lib:format("Exclusive --~p and --~p", [Opt, K]))
                   end, proplists:get_keys(RawOpts)).

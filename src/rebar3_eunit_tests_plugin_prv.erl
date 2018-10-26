@@ -43,10 +43,17 @@ format_error(Reason) ->
 opts() ->
     [
      %% eunit_tests specific options.
+     {raw, $r, "raw", string, "Raw eunit_tests value. Proir all other options. Example: \"[{module, foo_tests}]\""},
      {tests, $t, "tests", string, "Comma separated list of test functions. Form: modname:funname | funname"},
      {default_module, $m, "default_module", string, "Default module."},
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defaults to \"_test_\"."},
      {module_suffix, undefined, "module_suffix", string, "Module suffix. Defaults to \"_tests\"."},
+     %% eunit compatible options -- these are exclusive above.
+     {app, undefined, "app", string, "Comma separated list of application test suites to run."},
+     {application, undefined, "application", string, "Same as \"app\""},
+     {dir, $d, "dir", string, "Comma separated list of dirs to load tests from."},
+     {file, $f, "file", string, "Comma separated list of files to load tests from."},
+     {suite, $s, "suite", string, "Comma separated list of modules to load tests from."},
      %% passthrough to eunit provider.
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
      {cover_export_name, undefined, "cover_export_name", string, "Base name of the coverdata file to write."},
@@ -59,18 +66,37 @@ opts() ->
 -spec override_state(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 override_state(State0) ->
     {RawOpts, _} = rebar_state:command_parsed_args(State0),
+    Raw = proplists:get_value(raw, RawOpts, []),
     Tests0 = proplists:get_value(tests, RawOpts, []),
     DefModule = proplists:get_value(default_module, RawOpts, []),
     FunSuffix = proplists:get_value(function_suffix, RawOpts, "_test_"),
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
-        if Tests0 =:= [] ->
-                if DefModule =:= [] -> error("Tests is not specified.");
-                   true -> ok
-                end,
-                %% rebar3 eunit_tests -m module
-                %%   -> [{module, module_tests}]
-                Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}];
+        if Raw =/= [] ->
+                if Tests0 =/= [] -> error("Exclusive --raw and --tests"); true -> ok end,
+                check_exclusive_options(raw, RawOpts),
+                Tokens =
+                    case erl_scan:string(Raw ++ ".") of
+                        {ok, T, _} -> T;
+                        _ -> error(io_lib:format("Cannot scan --raw: ~p", [Raw]))
+                    end,
+                Tests =
+                    case erl_parse:parse_term(Tokens) of
+                        {ok, Term} when is_list(Term) -> Term;
+                        {ok, Term} -> [Term];
+                        _ -> error(io_lib:format("Cannot parse --raw: ~p", [Raw]))
+                    end;
+           Tests0 =:= [] ->
+                if DefModule =:= [] ->
+                        %% rebar3 eunit_tests
+                        %%   -> []
+                        Tests = [];
+                   true ->
+                        %% rebar3 eunit_tests -m module
+                        %%   -> [{module, module_tests}]
+                        check_exclusive_options(default_module, RawOpts),
+                        Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}]
+                end;
            true ->
                 %% rebar3 eunit_tests -t mod1:fun1,mod2:fun2,...,modN:funN
                 %%   -> [{generator, mod1_tests, fun1_test_},
@@ -82,6 +108,7 @@ override_state(State0) ->
                 %%       {generator, mod_tests, fun2_test_},
                 %%       ...
                 %%       {generator, mod_tests, funN_test_}]
+                check_exclusive_options(tests, RawOpts),
                 Tests1 = re:split(Tests0, ",", [{return, list}]),
                 Tests =
                     lists:map(
@@ -105,3 +132,16 @@ override_state(State0) ->
     catch
         error:Reason -> {error, lists:flatten(Reason)}
     end.
+
+-spec check_exclusive_options(atom(), [proplists:property()]) -> ok.
+check_exclusive_options(Opt, RawOpts) ->
+    lists:foreach(fun(K) ->
+                          case K of
+                              app -> true;
+                              application -> true;
+                              dir -> true;
+                              file -> true;
+                              suite -> true;
+                              _ -> false
+                          end andalso error(io_lib:format("Exclusive --~p and --~p", [Opt, K]))
+                  end, proplists:get_keys(RawOpts)).

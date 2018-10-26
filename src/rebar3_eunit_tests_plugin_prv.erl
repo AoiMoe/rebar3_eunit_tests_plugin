@@ -73,6 +73,7 @@ override_state(State0) ->
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
         if Raw =/= [] ->
+                if Tests0 =/= [] -> error("Exclusive --raw and --tests"); true -> ok end,
                 check_exclusive_options(RawOpts),
                 Tokens =
                     case erl_scan:string(Raw ++ ".") of

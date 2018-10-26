@@ -43,6 +43,7 @@ format_error(Reason) ->
 opts() ->
     [
      %% eunit_tests specific options.
+     {raw, $r, "raw", string, "Raw eunit_tests value. Proir all other options. Example: \"[{module, foo_tests}]\""},
      {tests, $t, "tests", string, "Comma separated list of test functions. Form: modname:funname | funname"},
      {default_module, $m, "default_module", string, "Default module."},
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defaults to \"_test_\"."},
@@ -65,12 +66,25 @@ opts() ->
 -spec override_state(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 override_state(State0) ->
     {RawOpts, _} = rebar_state:command_parsed_args(State0),
+    Raw = proplists:get_value(raw, RawOpts, []),
     Tests0 = proplists:get_value(tests, RawOpts, []),
     DefModule = proplists:get_value(default_module, RawOpts, []),
     FunSuffix = proplists:get_value(function_suffix, RawOpts, "_test_"),
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
-        if Tests0 =:= [] ->
+        if Raw =/= [] ->
+                check_exclusive_options(RawOpts),
+                Tokens =
+                    case erl_scan:string(Raw ++ ".") of
+                        {ok, T, _} -> T;
+                        _ -> error(io_lib:format("Cannot scan --raw: ~p", [Raw]))
+                    end,
+                Tests =
+                    case erl_parse:parse_term(Tokens) of
+                        {ok, Term} -> Term;
+                        _ -> error(io_lib:format("Cannot parse --raw: ~p", [Raw]))
+                    end;
+           Tests0 =:= [] ->
                 if DefModule =:= [] ->
                         %% rebar3 eunit_tests
                         %%   -> []
@@ -78,19 +92,10 @@ override_state(State0) ->
                    true ->
                         %% rebar3 eunit_tests -m module
                         %%   -> [{module, module_tests}]
+                        check_exclusive_options(RawOpts),
                         Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}]
                 end;
            true ->
-                _ = lists:foreach(fun(K) ->
-                                          case K of
-                                              app -> true;
-                                              application -> true;
-                                              dir -> true;
-                                              file -> true;
-                                              suite -> true;
-                                              _ -> false
-                                          end andalso error(io_lib:format("Exclusive --~p and -t", [K]))
-                                  end, proplists:get_keys(RawOpts)),
                 %% rebar3 eunit_tests -t mod1:fun1,mod2:fun2,...,modN:funN
                 %%   -> [{generator, mod1_tests, fun1_test_},
                 %%       {generator, mod2_tests, fun2_test_},
@@ -101,6 +106,7 @@ override_state(State0) ->
                 %%       {generator, mod_tests, fun2_test_},
                 %%       ...
                 %%       {generator, mod_tests, funN_test_}]
+                check_exclusive_options(RawOpts),
                 Tests1 = re:split(Tests0, ",", [{return, list}]),
                 Tests =
                     lists:map(
@@ -124,3 +130,16 @@ override_state(State0) ->
     catch
         error:Reason -> {error, lists:flatten(Reason)}
     end.
+
+-spec check_exclusive_options([proplists:property()]) -> ok.
+check_exclusive_options(RawOpts) ->
+    lists:foreach(fun(K) ->
+                          case K of
+                              app -> true;
+                              application -> true;
+                              dir -> true;
+                              file -> true;
+                              suite -> true;
+                              _ -> false
+                          end andalso error(io_lib:format("Exclusive --~p and -t", [K]))
+                  end, proplists:get_keys(RawOpts)).

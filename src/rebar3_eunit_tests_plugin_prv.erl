@@ -82,7 +82,8 @@ override_state(State0) ->
                     end,
                 Tests =
                     case erl_parse:parse_term(Tokens) of
-                        {ok, Term} -> Term;
+                        {ok, Term} when is_list(Term) -> Term;
+                        {ok, Term} -> [Term];
                         _ -> error(io_lib:format("Cannot parse --raw: ~p", [Raw]))
                     end;
            Tests0 =:= [] ->

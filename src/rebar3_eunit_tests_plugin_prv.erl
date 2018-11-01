@@ -45,7 +45,7 @@ opts() ->
      %% eunit_tests specific options.
      {raw, $r, "raw", string, "Raw eunit_tests value. Proir all other options. Example: \"[{module, foo_tests}]\""},
      {tests, $t, "tests", string, "Comma separated list of test functions. Form: modname:funname | funname"},
-     {default_module, $m, "default_module", string, "Default module."},
+     {default_module, $u, "default_module", string, "Default module to be tested."},
      {function_suffix, undefined, "function_suffix", string, "Function suffix. Defaults to \"_test_\"."},
      {module_suffix, undefined, "module_suffix", string, "Module suffix. Defaults to \"_tests\"."},
      %% eunit compatible options -- these are exclusive above.
@@ -53,6 +53,7 @@ opts() ->
      {application, undefined, "application", string, "Same as \"app\""},
      {dir, $d, "dir", string, "Comma separated list of dirs to load tests from."},
      {file, $f, "file", string, "Comma separated list of files to load tests from."},
+     {module, $m, "module", string, "Comma separated list of modules to load tests from."},
      {suite, $s, "suite", string, "Comma separated list of modules to load tests from."},
      %% passthrough to eunit provider.
      {cover, $c, "cover", boolean, "Generate cover data. Defaults to false."},
@@ -73,6 +74,8 @@ override_state(State0) ->
     ModSuffix = proplists:get_value(module_suffix, RawOpts, "_tests"),
     try
         if Raw =/= [] ->
+                %% rebar3 eunit_tests -r [foo, bar]
+                %%   -> [foo, bar]
                 if Tests0 =/= [] -> error("Exclusive --raw and --tests"); true -> ok end,
                 check_exclusive_options(raw, RawOpts),
                 Tokens =
@@ -92,8 +95,8 @@ override_state(State0) ->
                         %%   -> []
                         Tests = [];
                    true ->
-                        %% rebar3 eunit_tests -m module
-                        %%   -> [{module, module_tests}]
+                        %% rebar3 eunit_tests -u mod
+                        %%   -> [{module, mod_tests}]
                         check_exclusive_options(default_module, RawOpts),
                         Tests = [{module, list_to_atom(DefModule ++ ModSuffix)}]
                 end;
@@ -103,7 +106,7 @@ override_state(State0) ->
                 %%       {generator, mod2_tests, fun2_test_},
                 %%       ...
                 %%       {generator, modN_tests, funN_test_}]
-                %% rebar3 eunit_tests -m mod -t fun1,fun2,...,funN
+                %% rebar3 eunit_tests -u mod -t fun1,fun2,...,funN
                 %%   -> [{generator, mod_tests, fun1_test_},
                 %%       {generator, mod_tests, fun2_test_},
                 %%       ...
@@ -141,6 +144,7 @@ check_exclusive_options(Opt, RawOpts) ->
                               application -> true;
                               dir -> true;
                               file -> true;
+                              module -> true;
                               suite -> true;
                               _ -> false
                           end andalso error(io_lib:format("Exclusive --~p and --~p", [Opt, K]))

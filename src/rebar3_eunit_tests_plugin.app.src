@@ -1,6 +1,6 @@
 {application, rebar3_eunit_tests_plugin,
  [{description, "A rebar plugin"},
-  {vsn, "1.0.1"},
+  {vsn, "1.1.0"},
   {registered, []},
   {applications,
    [kernel,

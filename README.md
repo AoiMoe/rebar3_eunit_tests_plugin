@@ -6,7 +6,7 @@ Add the plugin to your rebar config:
 
 ```
 {plugins, [
-    {rebar3_eunit_tests_plugin, {git, "https://github.com/AoiMoe/rebar3_eunit_tests_plugin.git", {tag, "v1.0.1"}}}
+    {rebar3_eunit_tests_plugin, {git, "https://github.com/AoiMoe/rebar3_eunit_tests_plugin.git", {tag, "v1.1.0"}}}
 ]}.
 ```
 
@@ -17,11 +17,12 @@ $ rebar3 help eunit_tests
 ===> Fetching rebar3_eunit_tests_plugin ...
 ===> Compiling rebar3_eunit_tests_plugin
 A rebar plugin to invoke eunit with overriding eunit_tests value by command line options.
-Usage: rebar3 eunit_tests [-r <raw>] [-t <tests>] [-m <default_module>]
+Usage: rebar3 eunit_tests [-r <raw>] [-t <tests>] [-u <default_module>]
                           [--function_suffix <function_suffix>]
                           [--module_suffix <module_suffix>] [--app <app>]
                           [--application <application>] [-d <dir>]
-                          [-f <file>] [-s <suite>] [-c <cover>]
+                          [-f <file>] [-m <module>] [-s <suite>]
+                          [-c <cover>]
                           [--cover_export_name <cover_export_name>]
                           [-v <verbose>] [--name <name>]
                           [--sname <sname>] [--setcookie <setcookie>]
@@ -30,7 +31,7 @@ Usage: rebar3 eunit_tests [-r <raw>] [-t <tests>] [-m <default_module>]
                         Example: "[{module, foo_tests}]"
   -t, --tests           Comma separated list of test functions. Form: 
                         modname:funname | funname
-  -m, --default_module  Default module.
+  -u, --default_module  Default module to be tested.
   --function_suffix     Function suffix. Defaults to "_test_".
   --module_suffix       Module suffix. Defaults to "_tests".
   --app                 Comma separated list of application test suites to 
@@ -38,6 +39,7 @@ Usage: rebar3 eunit_tests [-r <raw>] [-t <tests>] [-m <default_module>]
   --application         Same as "app"
   -d, --dir             Comma separated list of dirs to load tests from.
   -f, --file            Comma separated list of files to load tests from.
+  -m, --module          Comma separated list of modules to load tests from.
   -s, --suite           Comma separated list of modules to load tests from.
   -c, --cover           Generate cover data. Defaults to false.
   --cover_export_name   Base name of the coverdata file to write.
@@ -60,7 +62,7 @@ foo_tests: bar_test_...ok
 =======================================================
   Test passed.
 
-$ rebar3 eunit_tests -v -m foo -t bar,baz
+$ rebar3 eunit_tests -v -u foo -t bar,baz
 ===> Verifying dependencies...
 ===> Compiling rebar3_eunit_tests_plugin_test
 ===> Performing EUnit tests...
